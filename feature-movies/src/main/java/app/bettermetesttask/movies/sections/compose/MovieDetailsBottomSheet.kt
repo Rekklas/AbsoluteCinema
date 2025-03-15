@@ -74,8 +74,6 @@ fun MovieDetailsBottomSheet(movie: Movie, onClose: () -> Unit, onLikeClicked: (M
                 contentDescription = movie.title,
                 modifier = Modifier
                     .size(250.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color.LightGray)
             )
 
             Text(

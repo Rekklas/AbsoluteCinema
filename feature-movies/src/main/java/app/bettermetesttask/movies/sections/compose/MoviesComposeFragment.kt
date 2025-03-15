@@ -175,8 +175,6 @@ fun MovieItem(movie: Movie, onLikeClicked: (Int) -> Unit, onClicked: (Movie) -> 
                 contentDescription = "Movie Poster",
                 modifier = Modifier
                     .size(60.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.Gray)
             )
 
             Spacer(modifier = Modifier.width(16.dp))

@@ -5,6 +5,7 @@ import app.bettermetesttask.domainmovies.entries.Movie
 import app.bettermetesttask.domainmovies.repository.MoviesRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -30,6 +31,7 @@ class ObserveMoviesUseCase @Inject constructor(
                             }
                             Result.Success(movies)
                         }
+                        .catch { emit(Result.Success(result.data)) }
                 }
                 is Result.Error -> flowOf(result)
                 is Result.Loading -> flowOf(Result.Loading)
