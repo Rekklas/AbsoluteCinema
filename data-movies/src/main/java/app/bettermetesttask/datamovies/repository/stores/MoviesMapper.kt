@@ -5,24 +5,37 @@ import app.bettermetesttask.domainmovies.entries.Movie
 import javax.inject.Inject
 
 class MoviesMapper @Inject constructor() {
-
-    val mapToLocal: (Movie) -> MovieEntity = {
-        with(it) {
-            MovieEntity(id, title, description, posterPath)
-        }
+    fun mapToLocal(movie: Movie): MovieEntity {
+        return MovieEntity(
+            id = movie.id,
+            title = movie.title,
+            description = movie.description,
+            posterPath = movie.posterPath
+        )
     }
 
-    val mapFromLocal: (MovieEntity) -> Movie = {
-        with(it) {
-            Movie(id, title, description, posterPath)
-        }
+    fun mapFromLocal(entity: MovieEntity?): Movie {
+        return entity?.let {
+            Movie(
+                id = it.id,
+                title = it.title,
+                description = it.description,
+                posterPath = it.posterPath,
+            )
+        } ?: throw IllegalArgumentException("MovieEntity is null")
     }
 
-    val mapToLocalList: (List<Movie>) -> List<MovieEntity> = { movies ->
-        movies.map { mapToLocal(it) }
+    fun mapToLocalList(movies: List<Movie>?): List<MovieEntity> {
+        return movies?.map { mapToLocal(it) } ?: emptyList()
     }
 
-    val mapFromLocalList: (List<MovieEntity>) -> List<Movie> = { movieEntities ->
-        movieEntities.map { mapFromLocal(it) }
+    fun mapFromLocalList(entities: List<MovieEntity>?): List<Movie> {
+        return entities?.mapNotNull {
+            try {
+                mapFromLocal(it)
+            } catch (e: Exception) {
+                null
+            }
+        } ?: emptyList()
     }
 }

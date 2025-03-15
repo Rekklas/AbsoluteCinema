@@ -22,9 +22,10 @@ class MoviesRepositoryImpl @Inject constructor(
             localStore.saveMovies(mapper.mapToLocalList(remoteMovies))
             Result.Success(remoteMovies)
         } catch (e: Exception) {
-            val localMovies = mapper.mapFromLocalList(localStore.getMovies())
+            val localMovies = localStore.getMovies()
+            val mappedMovies = mapper.mapFromLocalList(localMovies)
             if (localMovies.isNotEmpty()) {
-                Result.Success(localMovies)
+                Result.Success(mappedMovies)
             } else {
                 Result.Error(e)
             }
