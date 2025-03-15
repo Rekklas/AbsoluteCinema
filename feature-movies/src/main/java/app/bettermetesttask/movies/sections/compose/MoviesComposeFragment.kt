@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -75,11 +76,23 @@ class MoviesComposeFragment : Fragment(), Injectable {
             )
             setContent {
                 val viewState by viewModel.moviesStateFlow.collectAsState()
+                val selectedMovie by viewModel.selectedMovie.collectAsState()
                 MoviesComposeScreen(viewState, likeMovie = { movie ->
                     viewModel.likeMovie(movie)
                 }, viewLoaded = {
                     viewModel.loadMovies()
+                }, onMovieClicked = {
+                        viewModel.openMovieDetails(it)
                 })
+
+
+                selectedMovie?.let { movie ->
+                    MovieDetailsBottomSheet(
+                        movie = movie,
+                        onClose = { viewModel.closeMovieDetails() },
+                        onLikeClicked = { viewModel.likeMovie(it) }
+                    )
+                }
             }
         }
     }
@@ -89,7 +102,8 @@ class MoviesComposeFragment : Fragment(), Injectable {
 private fun MoviesComposeScreen(
     moviesState: MoviesState,
     likeMovie: (Movie) -> Unit,
-    viewLoaded: () -> Unit
+    viewLoaded: () -> Unit,
+    onMovieClicked: (Movie) -> Unit
 ) {
     LaunchedEffect(Unit) {
         viewLoaded()
@@ -107,6 +121,8 @@ private fun MoviesComposeScreen(
                     items(moviesState.movies) { item ->
                         MovieItem(item, onLikeClicked = {
                             likeMovie(item)
+                        }, onClicked = {
+                            onMovieClicked(item)
                         })
                     }
                 }
@@ -139,11 +155,12 @@ private fun MoviesComposeScreen(
 }
 
 @Composable
-fun MovieItem(movie: Movie, onLikeClicked: (Int) -> Unit) {
+fun MovieItem(movie: Movie, onLikeClicked: (Int) -> Unit, onClicked: (Movie) -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(8.dp)
+            .clickable { onClicked(movie) },
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
     ) {
@@ -195,5 +212,5 @@ private fun PreviewsMoviesComposeScreen() {
                 liked = index % 2 == 0,
             )
         }
-    ), likeMovie = {}, viewLoaded = {})
+    ), likeMovie = {}, viewLoaded = {}, onMovieClicked = {})
 }
