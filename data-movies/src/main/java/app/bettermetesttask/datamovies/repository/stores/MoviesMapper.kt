@@ -17,4 +17,12 @@ class MoviesMapper @Inject constructor() {
             Movie(id, title, description, posterPath)
         }
     }
+
+    val mapToLocalList: (List<Movie>) -> List<MovieEntity> = { movies ->
+        movies.map { mapToLocal(it) }
+    }
+
+    val mapFromLocalList: (List<MovieEntity>) -> List<Movie> = { movieEntities ->
+        movieEntities.map { mapFromLocal(it) }
+    }
 }
