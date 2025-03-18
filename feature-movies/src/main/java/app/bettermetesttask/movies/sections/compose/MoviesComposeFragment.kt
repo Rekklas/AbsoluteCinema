@@ -5,12 +5,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -27,11 +31,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -71,11 +75,23 @@ class MoviesComposeFragment : Fragment(), Injectable {
             )
             setContent {
                 val viewState by viewModel.moviesStateFlow.collectAsState()
+                val selectedMovie by viewModel.selectedMovie.collectAsState()
                 MoviesComposeScreen(viewState, likeMovie = { movie ->
                     viewModel.likeMovie(movie)
                 }, viewLoaded = {
                     viewModel.loadMovies()
+                }, onMovieClicked = {
+                        viewModel.openMovieDetails(it)
                 })
+
+
+                selectedMovie?.let { movie ->
+                    MovieDetailsBottomSheet(
+                        movie = movie,
+                        onClose = { viewModel.closeMovieDetails() },
+                        onLikeClicked = { viewModel.likeMovie(it) }
+                    )
+                }
             }
         }
     }
@@ -85,9 +101,13 @@ class MoviesComposeFragment : Fragment(), Injectable {
 private fun MoviesComposeScreen(
     moviesState: MoviesState,
     likeMovie: (Movie) -> Unit,
-    viewLoaded: () -> Unit
+    viewLoaded: () -> Unit,
+    onMovieClicked: (Movie) -> Unit
 ) {
-    viewLoaded()
+    LaunchedEffect(Unit) {
+        viewLoaded()
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -100,6 +120,8 @@ private fun MoviesComposeScreen(
                     items(moviesState.movies) { item ->
                         MovieItem(item, onLikeClicked = {
                             likeMovie(item)
+                        }, onClicked = {
+                            onMovieClicked(item)
                         })
                     }
                 }
@@ -113,16 +135,31 @@ private fun MoviesComposeScreen(
                     CircularProgressIndicator()
                 }
             }
+
+            is MoviesState.Error -> {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text("Failed to load movies: ${moviesState.message}", color = Color.Red)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = viewLoaded) {
+                        Text("Retry")
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-fun MovieItem(movie: Movie, onLikeClicked: (Int) -> Unit) {
+fun MovieItem(movie: Movie, onLikeClicked: (Int) -> Unit, onClicked: (Movie) -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(8.dp)
+            .clickable { onClicked(movie) },
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
     ) {
@@ -137,8 +174,6 @@ fun MovieItem(movie: Movie, onLikeClicked: (Int) -> Unit) {
                 contentDescription = "Movie Poster",
                 modifier = Modifier
                     .size(60.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.Gray)
             )
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -174,5 +209,5 @@ private fun PreviewsMoviesComposeScreen() {
                 liked = index % 2 == 0,
             )
         }
-    ), likeMovie = {}, viewLoaded = {})
+    ), likeMovie = {}, viewLoaded = {}, onMovieClicked = {})
 }
